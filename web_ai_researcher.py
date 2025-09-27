@@ -36,7 +36,8 @@ def setup_path():
 
 # 配置日志系统
 def setup_logging():
-    logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    logs_dir = os.path.join(base_dir, "logs")
     os.makedirs(logs_dir, exist_ok=True)
     current_date = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
     log_file = os.path.join(logs_dir, f"log_{current_date}.log")
