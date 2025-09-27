@@ -35,11 +35,13 @@ def get_args_paper():
 def main_ai_researcher(input, reference, mode):
     # if main_autoagent.mode is None:
     #     main_autoagent.mode = mode
-        
+
     # if main_autoagent.mode != mode:
     #     model = COMPLETION_MODEL
     #     main_autoagent.mode = mode
     #     global_state.INIT_FLAG = False
+    global_state.reset_token_usage()
+    answer = ""
     load_dotenv()
     category = os.getenv("CATEGORY")
     instance_id = os.getenv("INSTANCE_ID")
@@ -86,7 +88,9 @@ def main_ai_researcher(input, reference, mode):
                 args.max_iter_times = max_iter_times
                 args.category = category
 
-                run_infer_plan.main(args, input, reference)
+                result = run_infer_plan.main(args, input, reference)
+                if result is not None:
+                    answer = result
                 global_state.INIT_FLAG = False
         case 'Reference-Based Ideation':
             # clear_screen()
@@ -123,7 +127,9 @@ def main_ai_researcher(input, reference, mode):
                 args.max_iter_times = max_iter_times
                 args.category = category
 
-                run_infer_idea.main(args, reference)
+                result = run_infer_idea.main(args, reference)
+                if result is not None:
+                    answer = result
                 global_state.INIT_FLAG = False
         case 'Paper Generation Agent':
             # clear_screen()
@@ -138,5 +144,9 @@ def main_ai_researcher(input, reference, mode):
                 args.research_field = research_field
                 args.instance_id = instance_id
 
-                asyncio.run(writing.writing(args.research_field, args.instance_id))
+                writing_result = asyncio.run(writing.writing(args.research_field, args.instance_id))
+                if writing_result is not None:
+                    answer = writing_result
                 global_state.INIT_FLAG = False
+    token_usage = global_state.get_token_usage()
+    return answer, token_usage
