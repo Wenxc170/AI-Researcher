@@ -92,6 +92,7 @@ def main_ai_researcher(input, reference, mode):
                 if result is not None:
                     answer = result
                 global_state.INIT_FLAG = False
+
         case 'Reference-Based Ideation':
             # clear_screen()
             if global_state.INIT_FLAG is False:
@@ -131,6 +132,7 @@ def main_ai_researcher(input, reference, mode):
                 if result is not None:
                     answer = result
                 global_state.INIT_FLAG = False
+
         case 'Paper Generation Agent':
             # clear_screen()
             if global_state.INIT_FLAG is False:
