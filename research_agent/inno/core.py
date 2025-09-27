@@ -7,6 +7,7 @@ from datetime import datetime
 # Local imports
 import litellm
 from litellm import ContextWindowExceededError, BadRequestError
+import global_state
 from litellm.types.utils import Message as litellmMessage
 from .util import function_to_json, debug_print, merge_chunk, pretty_print_messages
 from .types import (
@@ -79,6 +80,32 @@ def should_retry_error(retry_state: RetryCallState):
     ])
 __CTX_VARS_NAME__ = "context_variables"
 logger = LoggerManager.get_logger()
+
+
+def _get_usage_value(usage_obj, key: str) -> int:
+    if usage_obj is None:
+        return 0
+    if hasattr(usage_obj, key):
+        value = getattr(usage_obj, key)
+        return value or 0
+    if isinstance(usage_obj, dict):
+        value = usage_obj.get(key, 0)
+        return value or 0
+    return 0
+
+
+def _accumulate_token_usage(response) -> None:
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return
+
+    prompt_tokens = _get_usage_value(usage, "prompt_tokens")
+    completion_tokens = _get_usage_value(usage, "completion_tokens")
+
+    global_state.PROMPT_TOKENS += prompt_tokens
+    global_state.COMPLETION_TOKENS += completion_tokens
+
+
 def truncate_message(message: str) -> str:
     """按比例截断消息"""
     if not message:
@@ -156,7 +183,9 @@ class MetaChain:
         if tools and create_params['model'].startswith("gpt"):
             create_params["parallel_tool_calls"] = agent.parallel_tool_calls
 
-        return completion(**create_params)
+        response = completion(**create_params)
+        _accumulate_token_usage(response)
+        return response
 
     def handle_function_result(self, result, debug) -> Result:
         match result:
@@ -398,6 +427,7 @@ class MetaChain:
             if tools and create_params['model'].startswith("gpt"):
                 create_params["parallel_tool_calls"] = agent.parallel_tool_calls
             completion_response = await acompletion(**create_params)
+            _accumulate_token_usage(completion_response)
         elif create_model in NOT_USE_FN_CALL:
             assert agent.tool_choice == "required", f"Non-function calling mode MUST use tool_choice = 'required' rather than {agent.tool_choice}"
             last_content = messages[-1]["content"]
@@ -427,6 +457,7 @@ class MetaChain:
                 "base_url": API_BASE_URL,
             }
             completion_response = await acompletion(**create_params)
+            _accumulate_token_usage(completion_response)
             last_message = [{"role": "assistant", "content": completion_response.choices[0].message.content}]
             converted_message = convert_non_fncall_messages_to_fncall_messages(last_message, tools)
             converted_tool_calls = [ChatCompletionMessageToolCall(**tool_call) for tool_call in converted_message[0]["tool_calls"]]

@@ -540,7 +540,9 @@ def run_ai_researcher(question: str, reference: str, example_module: str) -> Tup
         try:
             # logging.info("Runing AI Researcher...")
             # answer, chat_history, token_info = run_society(society)
-            answer = main_ai_researcher(question, reference, example_module)
+            answer, token_info = main_ai_researcher(question, reference, example_module)
+            if answer is None:
+                answer = ""
             logging.info("Sucessully Runing AI Researcher")
         except Exception as e:
             logging.error(f"Error occurred while running Researcher: {str(e)}")
@@ -550,7 +552,6 @@ def run_ai_researcher(question: str, reference: str, example_module: str) -> Tup
                 f"❌ Error: Run failed - {str(e)}",
             )
 
-        token_info = None
         if not isinstance(token_info, dict):
             token_info = {}
 
