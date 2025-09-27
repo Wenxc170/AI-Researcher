@@ -47,8 +47,17 @@ def main_ai_researcher(input, reference, mode):
     container_name = os.getenv("CONTAINER_NAME")
     workplace_name = os.getenv("WORKPLACE_NAME")
     cache_path = os.getenv("CACHE_PATH")
-    port = int(os.getenv("PORT"))
-    max_iter_times = int(os.getenv("MAX_ITER_TIMES"))
+    port_env = os.getenv("PORT")
+    if port_env is None:
+        port_env = "12345"
+        print("PORT not set. Defaulting to 12345.")
+    port = int(port_env)
+
+    max_iter_env = os.getenv("MAX_ITER_TIMES")
+    if max_iter_env is None:
+        max_iter_env = "0"
+        print("MAX_ITER_TIMES not set. Defaulting to 0.")
+    max_iter_times = int(max_iter_env)
 
     
     match mode:
